@@ -1,238 +1,123 @@
 # ⚽ Soccer Predict Lab
 
-A portfolio-ready machine-learning project for predicting soccer match outcomes and common goal markets.
+> End-to-end soccer analytics and machine-learning project for predicting match outcomes, goal markets and scorelines.
+
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
+![ML](https://img.shields.io/badge/ML-CatBoost-orange)
+![App](https://img.shields.io/badge/App-Streamlit-red)
+![License](https://img.shields.io/badge/License-MIT-green)
 
 ## What it predicts
 
-- **1X2 match result** — Home / Draw / Away
-- **Over / Under 2.5 goals**
-- **BTTS** — Both Teams To Score
-- **Expected goals proxy** — predicted home and away goals
-- **Most likely scorelines** — Poisson-based probability estimates
+- Home / Draw / Away
+- Over / Under 2.5 goals
+- Both Teams To Score
+- Home and away goal estimates
+- Most likely scorelines
 
-## Why this project is useful
+## Supported leagues
 
-This repository demonstrates:
+| Code | League |
+|---|---|
+| E0 | Premier League |
+| SP1 | La Liga |
+| I1 | Serie A |
+| D1 | Bundesliga |
+| F1 | Ligue 1 |
 
-- data ingestion and cleaning
-- rolling time-series feature engineering
-- leakage-safe model training
-- multi-target machine learning
-- model evaluation and persistence
-- a Streamlit prediction dashboard
-- a command-line workflow
-- unit tests
-- GitHub Actions CI
+## Feature engineering
 
-## Tech stack
+The model uses only information available **before** the target match:
 
-- Python
-- pandas / NumPy
-- scikit-learn
-- CatBoost
-- joblib
-- Streamlit
-- Plotly
-- pytest
+- Elo ratings + home advantage
+- 5-game and 10-game form
+- points per game
+- goals scored / conceded
+- goal-difference trends
+- win rate
+- clean-sheet rate
+- rest days
+- shots
+- shots on target
 
----
+## Architecture
+
+```text
+Historical match data
+        ↓
+Cleaning
+        ↓
+Chronological feature engineering
+        ↓
+Elo + rolling form
+        ↓
+CatBoost models
+        ↓
+Holdout evaluation
+        ↓
+Streamlit dashboard
+```
+
+## Models
+
+| Task | Model |
+|---|---|
+| 1X2 | CatBoost multiclass classifier |
+| Over 2.5 | CatBoost classifier |
+| BTTS | CatBoost classifier |
+| Home goals | CatBoost regressor |
+| Away goals | CatBoost regressor |
+| Scorelines | Poisson model |
 
 ## Quick start
 
-### 1. Clone the repository
-
 ```bash
-git clone https://github.com/YOUR_USERNAME/soccer-predict-lab.git
-cd soccer-predict-lab
+git clone https://github.com/YOUR_USERNAME/Soccer-Predict-Lab.git
+cd Soccer-Predict-Lab
+python -m venv .venv
 ```
-
-### 2. Create a virtual environment
 
 Windows:
 
 ```bash
-python -m venv .venv
 .venv\Scripts\activate
 ```
 
-macOS/Linux:
+Install:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
+pip install -e .
 ```
 
-### 3. Install dependencies
+Build the five-league dataset and train:
 
 ```bash
-pip install -r requirements.txt
+python -m soccer_predict_lab.cli build-all
 ```
 
-### 4. Download historical data
-
-The downloader supports CSV files published by football-data.co.uk.
-
-```bash
-python -m soccer_predict_lab.cli download --league E0 --seasons 2324 2425 2526
-```
-
-Common league codes:
-
-| League | Code |
-|---|---|
-| Premier League | E0 |
-| La Liga | SP1 |
-| Serie A | I1 |
-| Bundesliga | D1 |
-| Ligue 1 | F1 |
-
-### 5. Build features
-
-```bash
-python -m soccer_predict_lab.cli prepare
-```
-
-### 6. Train models
-
-```bash
-python -m soccer_predict_lab.cli train
-```
-
-### 7. Evaluate
-
-```bash
-python -m soccer_predict_lab.cli evaluate
-```
-
-### 8. Launch dashboard
+Run the dashboard:
 
 ```bash
 streamlit run app/app.py
 ```
 
----
+Run tests:
 
-## Example dashboard output
-
-```text
-Manchester City vs Arsenal
-
-Home Win      48%
-Draw          27%
-Away Win      25%
-
-Over 2.5      63%
-Under 2.5     37%
-
-BTTS Yes      59%
-
-Predicted goals
-Manchester City  1.72
-Arsenal          1.21
-
-Most likely scores
-2-1   14%
-1-1   12%
-2-0    9%
+```bash
+pytest -q
 ```
-
----
-
-## Project structure
-
-```text
-soccer-predict-lab/
-│
-├── app/
-│   └── app.py
-├── data/
-│   ├── raw/
-│   └── processed/
-├── models/
-├── src/
-│   └── soccer_predict_lab/
-│       ├── __init__.py
-│       ├── cli.py
-│       ├── config.py
-│       ├── data.py
-│       ├── features.py
-│       ├── modeling.py
-│       ├── predict.py
-│       └── scorelines.py
-├── tests/
-├── .github/workflows/ci.yml
-├── .gitignore
-├── LICENSE
-├── pyproject.toml
-├── requirements.txt
-└── README.md
-```
-
----
-
-## Modeling approach
-
-The project creates rolling features using only matches that happened **before** each target match.
-
-Examples:
-
-- recent points per game
-- recent goals scored
-- recent goals conceded
-- home / away form
-- win rate
-- clean-sheet rate
-- goal-difference trend
-- rest days
-- rolling shot metrics when available
-
-Models:
-
-- CatBoost multiclass classifier → 1X2 result
-- CatBoost binary classifier → Over 2.5
-- CatBoost binary classifier → BTTS
-- CatBoost regressors → home and away goals
-
-The scoreline module converts predicted goal means into Poisson score probabilities.
-
----
-
-## Data source
-
-This project can download publicly available historical match CSVs from:
-
-- football-data.co.uk
-
-The repository does **not** redistribute their full dataset. Review the source website's terms before using data commercially.
-
----
-
-## Important note
-
-This project is for **education, analytics, and portfolio demonstration**. Predictions are probabilistic and should not be treated as guaranteed outcomes or financial advice.
-
----
-
-## Future improvements
-
-- xG-based features
-- Elo ratings
-- team-strength embeddings
-- injuries and lineups
-- bookmaker closing odds
-- calibration curves
-- walk-forward backtesting
-- Champions League support
-- automated upcoming-fixture ingestion
-- FastAPI endpoint
-- Docker deployment
-- experiment tracking with MLflow
-
----
 
 ## Resume bullet
 
-> Built an end-to-end soccer prediction platform in Python using CatBoost, rolling time-series feature engineering, multi-target classification/regression, Poisson score simulation, and an interactive Streamlit dashboard.
+> Built an end-to-end soccer analytics platform using Python, CatBoost, Elo ratings and leakage-safe rolling time-series features to predict 1X2 outcomes, Over/Under 2.5, BTTS, goals and scoreline probabilities across five major European leagues.
+
+## Data
+
+Historical CSVs are downloaded at runtime from football-data.co.uk. Full third-party datasets are not redistributed by this repository.
+
+## Disclaimer
+
+For education, research and portfolio use. Predictions are probabilistic, not guarantees.
 
 ## License
 

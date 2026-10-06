@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "soccer-predict-lab"
-version = "0.1.0"
-description = "Machine-learning soccer match prediction lab"
+version = "0.2.0"
+description = "End-to-end soccer prediction and sports analytics project"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
